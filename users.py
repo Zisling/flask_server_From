@@ -1,8 +1,8 @@
-from flask import Flask, request, jsonify , session
+from flask import Flask, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 import os
-from app import db, ma
+from shared_resources import db, ma
 
 
 class User(db.Model):
