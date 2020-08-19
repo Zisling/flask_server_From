@@ -1,7 +1,7 @@
 import os
 from shared_resources import db, ma
 from flask import Flask, request, jsonify, session
-from users import UserSchema
+import users
 
 
 def create_app():
@@ -20,24 +20,8 @@ def create_app():
     # Init ma
     ma.init_app(app)
 
-    @app.route('/', methods=['GET'])
-    def index():
-        username = request.json['username']
-        if username in session:
-            return jsonify({'user_state': 'Logged in as %s' % session[username]})
-        return jsonify({'user_state': 'You are not logged in'})
+    app.register_blueprint(users.bp)
 
-    @app.route('/login/<username>', methods=['POST'])
-    def login(username):
-        session[username] = username
-        return {'user_state': 'Logged in as %s' % session[username]}
-
-    @app.route('/logout', methods=['PUT'])
-    def logout():
-        # remove the username from the session if it's there
-        username = request.json['username']
-        session.pop(username, None)
-        return jsonify({'user_state': 'You are logged out {}'.format(username)})
 
     # Product Class/Model
     class Product(db.Model):
@@ -62,11 +46,6 @@ def create_app():
     # temp
     product_schema = ProductSchema()
     products_schema = ProductSchema(many=True)
-
-    # users
-
-    user = UserSchema()
-    users = UserSchema(many=True)
 
     @app.route('/product', methods=['POST'])
     def add_product():

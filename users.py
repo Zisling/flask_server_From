@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify, session
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
-import os
 from shared_resources import db, ma
+from flask import (
+    Blueprint, flash, g, redirect, render_template, request, session, url_for
+)
 
 
 class User(db.Model):
@@ -30,3 +30,27 @@ class UserSchema(ma.Schema):
 # Init schema
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
+
+bp = Blueprint('users', __name__, url_prefix='/users')
+
+
+@bp.route('/', methods=['GET'])
+def index():
+    username = request.json['username']
+    if username in session:
+        return jsonify({'user_state': 'Logged in as %s' % session[username]})
+    return jsonify({'user_state': 'You are not logged in'})
+
+
+@bp.route('/login/<username>', methods=['POST'])
+def login(username):
+    session[username] = username
+    return {'user_state': 'Logged in as %s' % session[username]}
+
+
+@bp.route('/logout', methods=['PUT'])
+def logout():
+    # remove the username from the session if it's there
+    username = request.json['username']
+    session.pop(username, None)
+    return jsonify({'user_state': 'You are logged out {}'.format(username)})
