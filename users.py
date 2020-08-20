@@ -1,11 +1,10 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, Blueprint
 from shared_resources import db, ma
-from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
-)
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, login_required, current_user , UserMixin, logout_user
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(100), unique=True)
     last_name = db.Column(db.String(100), unique=True)
@@ -35,22 +34,42 @@ bp = Blueprint('users', __name__, url_prefix='/users')
 
 
 @bp.route('/', methods=['GET'])
+@login_required
 def index():
-    username = request.json['username']
-    if username in session:
-        return jsonify({'user_state': 'Logged in as %s' % session[username]})
-    return jsonify({'user_state': 'You are not logged in'})
+    return jsonify({'user_state': 'You are logged in {}'.format(current_user.email)})
 
 
-@bp.route('/login/<username>', methods=['POST'])
-def login(username):
-    session[username] = username
-    return {'user_state': 'Logged in as %s' % session[username]}
+@bp.route('/login', methods=['POST'])
+def login():
+    email = request.json['email']
+    password = request.json['password']
+    remember = True if request.form.get('remember') else False
+    user = User.query.filter_by(email=email).first()
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({'user_state': 'fail to login {}'.format(email)})
+    login_user(user, remember=remember)
+    return {'user_state': 'Logged in as %s' % email}
 
 
 @bp.route('/logout', methods=['PUT'])
+@login_required
 def logout():
-    # remove the username from the session if it's there
-    username = request.json['username']
-    session.pop(username, None)
-    return jsonify({'user_state': 'You are logged out {}'.format(username)})
+    email = current_user.email
+    logout_user()
+    return jsonify({'user_state': 'You are logged out {}'.format(email)})
+
+
+@bp.route('/signup', methods=['POST'])
+def signup():
+    first_name = request.json['first_name']
+    last_name = request.json['last_name']
+    email = request.json['email']
+    password = request.json['password']
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return jsonify({"user status": "all ready exist"})
+
+    new_user = User(first_name, last_name, email, 'normal', password=generate_password_hash(password, method='sha256'))
+    db.session.add(new_user)
+    db.session.commit()
+    return {'user_state': 'signup as %s now go and login' % session[email]}
