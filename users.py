@@ -1,7 +1,7 @@
-from flask import Flask, request, jsonify, session, Blueprint
+from flask import Flask, request, jsonify, Blueprint
 from shared_resources import db, ma
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, login_required, current_user , UserMixin, logout_user
+from flask_login import login_user, login_required, current_user, UserMixin, logout_user
 
 
 class User(db.Model, UserMixin):
@@ -20,7 +20,7 @@ class User(db.Model, UserMixin):
         self.password = password
 
 
-# Product Schema
+# USER Schema
 class UserSchema(ma.Schema):
     class Meta:
         fields = ('id', 'first_name', 'last_name', 'email', 'permissions', 'password')
@@ -48,7 +48,7 @@ def login():
     if not user or not check_password_hash(user.password, password):
         return jsonify({'user_state': 'fail to login {}'.format(email)})
     login_user(user, remember=remember)
-    return {'user_state': 'Logged in as %s' % email}
+    return jsonify({'user_state': 'Logged in as %s' % email, 'login': True})
 
 
 @bp.route('/logout', methods=['PUT'])
@@ -61,15 +61,16 @@ def logout():
 
 @bp.route('/signup', methods=['POST'])
 def signup():
+    print(request.json)
     first_name = request.json['first_name']
     last_name = request.json['last_name']
     email = request.json['email']
     password = request.json['password']
     user = User.query.filter_by(email=email).first()
     if user:
-        return jsonify({"user status": "all ready exist"})
+        return jsonify({"user status": "all ready exist", 'signup': True})
 
     new_user = User(first_name, last_name, email, 'normal', password=generate_password_hash(password, method='sha256'))
     db.session.add(new_user)
     db.session.commit()
-    return {'user_state': 'signup as %s now go and login' % session[email]}
+    return {'user_state': 'signup as %s now go and login' % email}
