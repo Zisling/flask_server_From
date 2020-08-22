@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_required
 import users
 from users import User
+from post import Post
 from json_maker import is_logged_in_json
 
 

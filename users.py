@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, Blueprint
 from shared_resources import db, ma
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, current_user, UserMixin, logout_user
-from json_maker import login_json, logout_json
+from json_maker import login_json, logout_json, signup_json
 
 
 class User(db.Model, UserMixin):
@@ -64,16 +64,15 @@ def logout():
 
 @bp.route('/signup', methods=['POST'])
 def signup():
-    print(request.json)
     first_name = request.json['first_name']
     last_name = request.json['last_name']
     email = request.json['email']
     password = request.json['password']
     user = User.query.filter_by(email=email).first()
     if user:
-        return jsonify({"user status": "all ready exist", 'signup': True})
+        return signup_json(login_status=False, first_name=first_name, last_name=last_name, email=email)
 
     new_user = User(first_name, last_name, email, 'normal', password=generate_password_hash(password, method='sha256'))
     db.session.add(new_user)
     db.session.commit()
-    return {'user_state': 'signup as %s now go and login' % email}
+    return signup_json(login_status=False, first_name=first_name, last_name=last_name, email=email)
