@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, Blueprint
 from shared_resources import db, ma
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, current_user, UserMixin, logout_user
+from json_maker import login_json, logout_json
 
 
 class User(db.Model, UserMixin):
@@ -36,7 +37,8 @@ bp = Blueprint('users', __name__, url_prefix='/users')
 @bp.route('/', methods=['GET'])
 @login_required
 def index():
-    return jsonify({'user_state': 'You are logged in {}'.format(current_user.email)})
+    if current_user.is_authenticated:
+        return jsonify({'user_state': 'You are logged in {}'.format(current_user.email)})
 
 
 @bp.route('/login', methods=['POST'])
@@ -46,9 +48,10 @@ def login():
     remember = True if request.form.get('remember') else False
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password, password):
-        return jsonify({'user_state': 'fail to login {}'.format(email)})
+        return login_json(login_status=False, first_name='user not found', last_name='user not found', email=email,
+                          confirm=False)
     login_user(user, remember=remember)
-    return jsonify({'user_state': 'Logged in as %s' % email, 'login': True})
+    return login_json(login_status=True, first_name=user.first_name, last_name=user.last_name, email=user.email)
 
 
 @bp.route('/logout', methods=['PUT'])
@@ -56,7 +59,7 @@ def login():
 def logout():
     email = current_user.email
     logout_user()
-    return jsonify({'user_state': 'You are logged out {}'.format(email)})
+    return logout_json(login_status=False, email=email)
 
 
 @bp.route('/signup', methods=['POST'])

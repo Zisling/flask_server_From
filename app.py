@@ -3,9 +3,10 @@ import time
 
 from shared_resources import db, ma
 from flask import Flask, request, jsonify
-from flask_login import LoginManager
+from flask_login import LoginManager, login_required
 import users
 from users import User
+from json_maker import is_logged_in_json
 
 
 def create_app():
@@ -41,6 +42,11 @@ def create_app():
     @app.route('/time')
     def get_current_time():
         return jsonify({'time': time.time()})
+
+    @app.route('/logged')
+    @login_required
+    def is_logged_in():
+        return is_logged_in_json(login_status=True)
 
     return app
 
