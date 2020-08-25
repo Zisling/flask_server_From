@@ -12,6 +12,13 @@ def confirm_json(login_status, first_name, last_name, email, confirm=True):
     })
 
 
+def post_json(confirm=True):
+    return jsonify({
+        'action': 'post',
+        'confirm': confirm,
+    })
+
+
 def login_json(login_status, first_name, last_name, email, confirm=True):
     return jsonify({
         'action': 'login',

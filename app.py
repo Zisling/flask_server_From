@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_required
 import users
 from users import User
-from post import Post
+import post
 from json_maker import is_logged_in_json
 
 
@@ -38,6 +38,7 @@ def create_app():
     ma.init_app(app)
     # register the blueprint (views of users)
     app.register_blueprint(users.bp)
+    app.register_blueprint(post.bp)
 
     # test if the website is working
     @app.route('/time')
