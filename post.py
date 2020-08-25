@@ -7,7 +7,8 @@ import json
 
 
 class Post(db.Model):
-    author = db.Column('author', db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    author = db.Column('author', db.Integer, db.ForeignKey('user.id'))
     subject = db.Column(db.String(100))
     text = db.Column(db.String(500))
 
@@ -42,12 +43,12 @@ def post():
     return post_json()
 
 
-@bp.route('/', methods=['get'])
-@login_required
+@bp.route('/', methods=['GET'])
+# @login_required
 def get_post():
     posts = Post.query.all()
-    posts = jsonify(list(map(post_to_json, posts)))
-    return posts
+    posts = posts_schema.dump(posts)
+    return jsonify(posts)
 
 
 def post_to_json(post):

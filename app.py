@@ -51,8 +51,3 @@ def create_app():
         return is_logged_in_json(login_status=True)
 
     return app
-
-# run server
-# if __name__ == '__main__':
-#     app = create_app()
-#     # app.run(port=5000, debug=True)
